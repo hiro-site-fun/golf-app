@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ゴルフ ラスベガス スコア管理（18H一覧・ローテーション対応）</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans JP & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', '"Inter"', 'sans-serif'],
+                        num: ['"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        turf: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* スマホ操作最適化のためのカスタムスタイル */
+        body {
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+        /* タップ時のフィードバック */
+        .btn-tap:active {
+            transform: scale(0.95);
+        }
+        /* テーブルの横スクロールを滑らかに */
+        .scroll-touch {
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col select-none">
+
+    <!-- ヘッダー -->
+    <header class="bg-turf-800 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <!-- ゴルフフラッグSVGアイコン -->
+                <svg class="w-6 h-6 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path>
+                </svg>
+                <h1 class="font-bold text-lg tracking-wide">GOLF LAS VEGAS</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="header-mode-badge" class="text-[11px] font-bold bg-emerald-700/90 text-emerald-100 px-2 py-1 rounded-lg border border-emerald-500/40">
+                    毎Hローテ
+                </span>
+                <div id="header-badge" class="text-xs font-bold bg-turf-900/90 text-emerald-200 px-2.5 py-1 rounded-full border border-emerald-600/40">
+                    0 / 18H
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツエリア -->
+    <main class="flex-1 max-w-2xl w-full mx-auto pb-24 px-2.5 pt-3">
+
+        <!-- ==========================================
+             TAB 1: 設定・メンバー入力画面
+             ========================================== -->
+        <section id="tab-settings" class="space-y-4">
+            <!-- プレイヤー名入力カード -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="font-bold text-base text-slate-800 flex items-center gap-1.5">
+                        <span class="w-2 h-5 bg-turf-600 rounded-full inline-block"></span>
+                        メンバー設定（4名）
+                    </h2>
+                    <button onclick="shuffleStartingOrder()" class="btn-tap text-xs font-bold bg-emerald-50 text-turf-700 border border-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        順番シャッフル
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <label class="text-[11px] font-bold text-turf-700 block mb-1">メンバー A（1番目）</label>
+                        <input type="text" id="player-name-0" onchange="updatePlayerName(0, this.value)" placeholder="Aさん" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-turf-500">
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <label class="text-[11px] font-bold text-turf-700 block mb-1">メンバー B（2番目）</label>
+                        <input type="text" id="player-name-1" onchange="updatePlayerName(1, this.value)" placeholder="Bさん" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-turf-500">
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <label class="text-[11px] font-bold text-turf-700 block mb-1">メンバー C（3番目）</label>
+                        <input type="text" id="player-name-2" onchange="updatePlayerName(2, this.value)" placeholder="Cさん" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-turf-500">
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <label class="text-[11px] font-bold text-turf-700 block mb-1">メンバー D（4番目）</label>
+                        <input type="text" id="player-name-3" onchange="updatePlayerName(3, this.value)" placeholder="Dさん" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-turf-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- チーム編成方式・ルール設定カード -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-4">
+                <h2 class="font-bold text-base text-slate-800 flex items-center gap-1.5">
+                    <span class="w-2 h-5 bg-turf-600 rounded-full inline-block"></span>
+                    チーム編成・ルール設定
+                </h2>
+
+                <!-- チーム編成方式の選択 -->
+                <div class="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200">
+                    <label class="text-xs font-bold text-turf-900 block mb-2">毎ホールのチーム分け方式</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-emerald-300 cursor-pointer">
+                            <input type="radio" name="teamMode" value="rotation" id="mode-rotation" onchange="updateSetting('teamMode', 'rotation')" class="mt-1 accent-turf-600">
+                            <div>
+                                <div class="font-bold text-sm text-slate-800">毎ホール自動ローテーション（推奨）</div>
+                                <div class="text-xs text-slate-500 mt-0.5">
+                                    1H: A&B vs C&D → 2H: A&C vs B&D → 3H: A&D vs B&C の順で毎ホール自動入替
+                                </div>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer">
+                            <input type="radio" name="teamMode" value="ranking" id="mode-ranking" onchange="updateSetting('teamMode', 'ranking')" class="mt-1 accent-turf-600">
+                            <div>
+                                <div class="font-bold text-sm text-slate-800">前ホール順位編成（1・4位 vs 2・3位）</div>
+                                <div class="text-xs text-slate-500 mt-0.5">
+                                    前ホールの個人スコア1位と4位がペア、2位と3位がペアになる標準方式
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- レート設定 -->
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                    <label class="text-xs font-bold text-slate-600 block mb-1.5">1ポイントあたりのレート</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="setting-rate" min="0" step="10" onchange="updateSetting('rate', Number(this.value))" class="w-28 bg-white border border-slate-300 rounded-xl px-3 py-2 text-base font-num font-bold text-right focus:outline-none focus:ring-2 focus:ring-turf-500">
+                        <select id="setting-unit" onchange="updateSetting('unit', this.value)" class="bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-turf-500">
+                            <option value="pt">pt（ポイント）</option>
+                            <option value="円">円</option>
+                            <option value="G">G</option>
+                        </select>
+                        <span class="text-xs text-slate-500 ml-1">/ 1差</span>
+                    </div>
+                </div>
+
+                <!-- ルールトグル群 -->
+                <div class="divide-y divide-slate-100">
+                    <!-- バーディ逆転ルール -->
+                    <div class="py-3 flex items-center justify-between gap-3">
+                        <div>
+                            <div class="font-bold text-sm text-slate-800">バーディで相手スコア逆転</div>
+                            <div class="text-xs text-slate-500 mt-0.5">バーディが出ると相手チームの2桁スコアを逆転（例: 4と5 → 54）</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" id="rule-birdie-flip" onchange="updateSetting('birdieFlip', this.checked)" class="sr-only peer">
+                            <div class="w-12 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-turf-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- イーグル倍増ルール -->
+                    <div class="py-3 flex items-center justify-between gap-3">
+                        <div>
+                            <div class="font-bold text-sm text-slate-800">イーグル以上でポイント2倍</div>
+                            <div class="text-xs text-slate-500 mt-0.5">イーグル（-2以下）達成で相手スコア逆転＋獲得点差を2倍</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" id="rule-eagle-double" onchange="updateSetting('eagleDouble', this.checked)" class="sr-only peer">
+                            <div class="w-12 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-turf-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- 10打以上の処理 -->
+                    <div class="py-3 flex items-center justify-between gap-3">
+                        <div>
+                            <div class="font-bold text-sm text-slate-800">10打以上は大きい数字を10の位に</div>
+                            <div class="text-xs text-slate-500 mt-0.5">どちらかが10打以上叩いた場合、大きい数字を先頭に結合（例: 4と10 → 104）</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" id="rule-double-digit" onchange="updateSetting('doubleDigitHigh', this.checked)" class="sr-only peer">
+                            <div class="w-12 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-turf-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ラウンド開始ボタン＆リセット -->
+            <div class="space-y-2 pt-1">
+                <button onclick="switchTab('score')" class="btn-tap w-full bg-turf-700 hover:bg-turf-800 text-white font-bold py-4 rounded-2xl shadow-md text-base flex items-center justify-center gap-2">
+                    <span>18ホール一覧スコア入力へ</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                </button>
+                <button onclick="openResetModal()" class="btn-tap w-full bg-white text-rose-600 border border-rose-200 font-bold py-3 rounded-2xl text-sm">
+                    新規ラウンド開始（全スコアをリセット）
+                </button>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 2: 18ホール一覧スコア入力画面
+             ========================================== -->
+        <section id="tab-score" class="hidden space-y-3">
+            
+            <!-- 現在のリアルタイム累計ポイントバー（固定追従） -->
+            <div class="bg-turf-900 text-white rounded-2xl shadow-md p-2.5 sticky top-[52px] z-20 border border-turf-700">
+                <div class="flex items-center justify-between text-[10px] text-emerald-300 font-bold px-1 mb-1.5">
+                    <span>現在の累計ポイント（リアルタイム）</span>
+                    <div class="flex gap-2">
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-xs bg-blue-400 inline-block"></span>Team A</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-xs bg-amber-400 inline-block"></span>Team B</span>
+                    </div>
+                </div>
+                <div id="live-player-totals" class="grid grid-cols-4 gap-1.5">
+                    <!-- JSで4人の現在累計を表示 -->
+                </div>
+            </div>
+
+            <!-- OUT / IN クイックジャンプバー -->
+            <div class="flex items-center justify-between bg-white rounded-xl p-2 border border-slate-200 shadow-xs">
+                <span class="text-xs font-bold text-slate-600 pl-1">18ホール一覧入力</span>
+                <div class="flex gap-1.5">
+                    <button onclick="scrollToHole(0)" class="btn-tap text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg">OUT (1H〜)</button>
+                    <button onclick="scrollToHole(9)" class="btn-tap text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg">IN (10H〜)</button>
+                </div>
+            </div>
+
+            <!-- 1H〜18H 全ホール一覧カードリスト -->
+            <div id="all-holes-list" class="space-y-3">
+                <!-- JSで1H〜18Hまでのカードを一覧生成 -->
+            </div>
+
+            <!-- 精算画面へ進むボタン -->
+            <div class="pt-2">
+                <button onclick="switchTab('summary')" class="btn-tap w-full bg-turf-700 hover:bg-turf-800 text-white font-bold py-4 rounded-2xl shadow-md text-base flex items-center justify-center gap-2">
+                    <span>18H 精算・結果表を見る</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 3: 18Hスコアカード＆最終精算画面
+             ========================================== -->
+        <section id="tab-summary" class="hidden space-y-4">
+            
+            <!-- 最終収支・累計ポイントランキング -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="font-bold text-base text-slate-800 flex items-center gap-1.5">
+                        <span class="w-2 h-5 bg-turf-600 rounded-full inline-block"></span>
+                        18H 累計ポイント＆最終精算
+                    </h2>
+                    <span id="summary-rate-badge" class="text-xs font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg">
+                        1pt = 100円
+                    </span>
+                </div>
+
+                <div id="settlement-cards" class="space-y-2.5">
+                    <!-- JSで4人の精算結果カードを生成 -->
+                </div>
+            </div>
+
+            <!-- 18ホール全一覧スコアカード -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                    <h3 class="font-bold text-sm text-slate-800">18ホール全一覧 対戦・スコア表</h3>
+                    <div class="flex bg-slate-200/80 p-0.5 rounded-xl text-xs font-bold">
+                        <button onclick="setScorecardView('ALL')" id="sc-view-all" class="px-2.5 py-1 rounded-lg bg-white text-turf-800 shadow-xs">ALL (18H)</button>
+                        <button onclick="setScorecardView('OUT')" id="sc-view-out" class="px-2.5 py-1 rounded-lg text-slate-600">OUT</button>
+                        <button onclick="setScorecardView('IN')" id="sc-view-in" class="px-2.5 py-1 rounded-lg text-slate-600">IN</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto scroll-touch">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                                <th class="py-2.5 px-2 font-bold text-center sticky left-0 bg-slate-100 z-10 w-12">H</th>
+                                <th class="py-2.5 px-2 font-bold text-blue-700">Team A (ペア1)</th>
+                                <th class="py-2.5 px-2 font-bold text-amber-700">Team B (ペア2)</th>
+                                <th class="py-2.5 px-2 font-bold text-right">勝敗/差</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scorecard-tbody" class="divide-y divide-slate-100">
+                            <!-- JSで1H〜18H行を生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 個人別ストローク合計（グロス） -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                <h3 class="font-bold text-sm text-slate-800 mb-2.5">個人ストローク集計（グロス）</h3>
+                <div id="gross-summary-grid" class="grid grid-cols-2 gap-2">
+                    <!-- JSで4人のOUT/IN/TOTALグロスを表示 -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- 下部固定ナビゲーションバー（片手操作しやすい3タブ） -->
+    <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-30">
+        <div class="max-w-2xl mx-auto grid grid-cols-3 h-16">
+            <button onclick="switchTab('settings')" id="nav-settings" class="btn-tap flex flex-col items-center justify-center gap-0.5 text-slate-400 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                <span class="text-[11px] font-bold">設定・メンバー</span>
+            </button>
+            <button onclick="switchTab('score')" id="nav-score" class="btn-tap flex flex-col items-center justify-center gap-0.5 text-turf-700 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                <span class="text-[11px] font-bold">18Hスコア入力</span>
+            </button>
+            <button onclick="switchTab('summary')" id="nav-summary" class="btn-tap flex flex-col items-center justify-center gap-0.5 text-slate-400 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <span class="text-[11px] font-bold">18H精算・結果</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- リセット確認用カスタムモーダル -->
+    <div id="reset-modal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl space-y-4">
+            <div class="flex items-center gap-3 text-rose-600">
+                <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-slate-900">ラウンドデータのリセット</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">1H〜18Hのスコアがすべて消去されます。メンバー名とルール設定は保持されます。</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5 pt-2">
+                <button onclick="closeResetModal()" class="btn-tap py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm">キャンセル</button>
+                <button onclick="executeResetRound()" class="btn-tap py-2.5 rounded-xl bg-rose-600 text-white font-bold text-sm">リセットする</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg z-50 transition-opacity duration-200 opacity-0 pointer-events-none">
+        メッセージ
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * ゴルフ「ラスベガス」スコア管理アプリケーション（18ホール一覧＆ローテーション版）
+         * ============================================================================
+         */
+
+        const STORAGE_KEY = 'golf_las_vegas_app_v2';
+
+        // 標準的な18ホールのパー配列
+        const DEFAULT_PARS = [4, 4, 3, 4, 5, 4, 3, 4, 5,  4, 4, 3, 4, 5, 4, 3, 4, 5];
+
+        // 4人(0:A, 1:B, 2:C, 3:D)を2対2に分ける3パターンのローテーション
+        // 1H: A&B vs C&D -> 2H: A&C vs B&D -> 3H: A&D vs B&C -> 4H: A&B vs C&D ...
+        const TEAM_COMBINATIONS = [
+            { a: [0, 1], b: [2, 3], label: 'A&B vs C&D' },
+            { a: [0, 2], b: [1, 3], label: 'A&C vs B&D' },
+            { a: [0, 3], b: [1, 2], label: 'A&D vs B&C' }
+        ];
+
+        // アプリケーション状態
+        let appState = {
+            activeTab: 'score',       // 'settings' | 'score' | 'summary'
+            scorecardView: 'ALL',     // 'ALL' | 'OUT' | 'IN'
+            players: ['Aさん', 'Bさん', 'Cさん', 'Dさん'],
+            settings: {
+                teamMode: 'rotation',   // 'rotation' (毎ホールローテ) | 'ranking' (前ホール順位)
+                rate: 100,
+                unit: '円',
+                birdieFlip: true,       // バーディで相手スコア逆転
+                eagleDouble: true,      // イーグル以上でポイント2倍
+                doubleDigitHigh: true   // 10打以上は大きい方を10の位に
+            },
+            // 18ホール分のデータ
+            holes: Array.from({ length: 18 }, (_, idx) => ({
+                par: DEFAULT_PARS[idx],
+                scores: [null, null, null, null], // プレイヤー0〜3の打数
+                manualTeamIndex: null             // nullなら設定に従う、0/1/2なら手動ペア指定
+            }))
+        };
+
+        /**
+         * 初期化処理
+         */
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            renderAll();
+        });
+
+        /**
+         * localStorageからの状態復元
+         */
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = {
+                        ...appState,
+                        ...parsed,
+                        settings: { ...appState.settings, ...(parsed.settings || {}) }
+                    };
+                    if (!appState.holes || appState.holes.length !== 18) {
+                        appState.holes = Array.from({ length: 18 }, (_, idx) => ({
+                            par: DEFAULT_PARS[idx],
+                            scores: [null, null, null, null],
+                            manualTeamIndex: null
+                        }));
+                    }
+                }
+            } catch (e) {
+                console.error('保存データの読み込みに失敗しました:', e);
+            }
+        }
+
+        /**
+         * localStorageへの状態保存
+         */
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('データの保存に失敗しました:', e);
+            }
+        }
+
+        /**
+         * トースト表示
+         */
+        let toastTimer = null;
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.remove('opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                el.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        /**
+         * ============================================================================
+         * ラスベガス計算コアエンジン（全18ホールを一貫して計算）
+         * ============================================================================
+         */
+        function calculateAllHoles() {
+            const results = [];
+            const cumulativePlayerPoints = [0, 0, 0, 0];
+
+            for (let h = 0; h < 18; h++) {
+                const hole = appState.holes[h];
+                let teamA = [0, 1];
+                let teamB = [2, 3];
+                let tagText = '';
+
+                // 1. チーム決定ロジック
+                if (hole.manualTeamIndex !== null && TEAM_COMBINATIONS[hole.manualTeamIndex]) {
+                    const comb = TEAM_COMBINATIONS[hole.manualTeamIndex];
+                    teamA = [...comb.a];
+                    teamB = [...comb.b];
+                    tagText = '手動入替';
+                } else if (appState.settings.teamMode === 'rotation') {
+                    // 毎ホール自動ローテーション（1H: A&B vs C&D, 2H: A&C vs B&D, 3H: A&D vs B&C ...）
+                    const rotIdx = h % 3;
+                    const comb = TEAM_COMBINATIONS[rotIdx];
+                    teamA = [...comb.a];
+                    teamB = [...comb.b];
+                    tagText = `ローテ${rotIdx + 1}`;
+                } else {
+                    // 前ホール順位編成モード（1HはA&B vs C&D、2H以降は1・4位 vs 2・3位）
+                    if (h === 0) {
+                        teamA = [0, 1];
+                        teamB = [2, 3];
+                        tagText = '初期ペア';
+                    } else {
+                        const prev = results[h - 1];
+                        const prevScores = appState.holes[h - 1].scores;
+                        const prevComplete = prevScores.every(s => typeof s === 'number' && s > 0);
+
+                        if (!prevComplete) {
+                            teamA = [...prev.teamA];
+                            teamB = [...prev.teamB];
+                            tagText = '前H継続';
+                        } else {
+                            const ranked = [0, 1, 2, 3]
+                                .map(pIdx => ({ pIdx, score: prevScores[pIdx] }))
+                                .sort((x, y) => x.score - y.score);
+
+                            const p1 = ranked[0].pIdx;
+                            const p4 = ranked[3].pIdx;
+                            const p2 = ranked[1].pIdx;
+                            const p3 = ranked[2].pIdx;
+
+                            if (p1 === 0 || p4 === 0) {
+                                teamA = [p1, p4].sort((a, b) => a - b);
+                                teamB = [p2, p3].sort((a, b) => a - b);
+                            } else {
+                                teamA = [p2, p3].sort((a, b) => a - b);
+                                teamB = [p1, p4].sort((a, b) => a - b);
+                            }
+                            tagText = '1・4位 vs 2・3位';
+                        }
+                    }
+                }
+
+                // 2. スコア計算
+                const sA1 = hole.scores[teamA[0]];
+                const sA2 = hole.scores[teamA[1]];
+                const sB1 = hole.scores[teamB[0]];
+                const sB2 = hole.scores[teamB[1]];
+
+                const isComplete = [sA1, sA2, sB1, sB2].every(v => typeof v === 'number' && v > 0);
+
+                let rawA = null, rawB = null;
+                let finalA = null, finalB = null;
+                let flippedA = false, flippedB = false;
+                let multiplier = 1;
+                let diff = 0; // 正ならTeam A勝利、負ならTeam B勝利
+                let isTie = false;
+
+                if (isComplete) {
+                    rawA = combineScores(sA1, sA2, false);
+                    rawB = combineScores(sB1, sB2, false);
+
+                    const minA = Math.min(sA1, sA2);
+                    const minB = Math.min(sB1, sB2);
+                    const birdieA = minA <= hole.par - 1;
+                    const birdieB = minB <= hole.par - 1;
+                    const eagleA = minA <= hole.par - 2;
+                    const eagleB = minB <= hole.par - 2;
+
+                    // バーディ逆転ルール（相手のみバーディなら自チームが逆転）
+                    if (appState.settings.birdieFlip) {
+                        if (birdieB && !birdieA) flippedA = true;
+                        if (birdieA && !birdieB) flippedB = true;
+                    }
+
+                    finalA = combineScores(sA1, sA2, flippedA);
+                    finalB = combineScores(sB1, sB2, flippedB);
+
+                    // イーグル倍増ルール
+                    if (appState.settings.eagleDouble) {
+                        if (eagleA && !eagleB) multiplier = 2;
+                        if (eagleB && !eagleA) multiplier = 2;
+                    }
+
+                    // 点差計算（少ない方が勝ちなので、Team B - Team A が Team Aの獲得pt）
+                    diff = (finalB - finalA) * multiplier;
+                    isTie = (diff === 0);
+
+                    teamA.forEach(p => cumulativePlayerPoints[p] += diff);
+                    teamB.forEach(p => cumulativePlayerPoints[p] -= diff);
+                }
+
+                results.push({
+                    holeIndex: h,
+                    par: hole.par,
+                    teamA,
+                    teamB,
+                    tagText,
+                    isComplete,
+                    rawA,
+                    rawB,
+                    finalA,
+                    finalB,
+                    flippedA,
+                    flippedB,
+                    multiplier,
+                    diff,
+                    isTie
+                });
+            }
+
+            return {
+                holes: results,
+                totalPlayerPoints: cumulativePlayerPoints
+            };
+        }
+
+        /**
+         * 2人の打数からラスベガス2桁（または3桁）数値を生成するヘルパー
+         */
+        function combineScores(s1, s2, isFlipped) {
+            const low = Math.min(s1, s2);
+            const high = Math.max(s1, s2);
+
+            if (appState.settings.doubleDigitHigh && high >= 10) {
+                return Number(`${high}${low}`);
+            }
+            return isFlipped ? Number(`${high}${low}`) : Number(`${low}${high}`);
+        }
+
+        /**
+         * ============================================================================
+         * ユーザー操作アクション
+         * ============================================================================
+         */
+
+        function switchTab(tabName) {
+            appState.activeTab = tabName;
+            saveState();
+            renderAll();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updatePlayerName(index, value) {
+            const trimmed = value.trim();
+            appState.players[index] = trimmed || `${['A', 'B', 'C', 'D'][index]}さん`;
+            saveState();
+            renderAll();
+        }
+
+        function shuffleStartingOrder() {
+            const arr = [...appState.players];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            appState.players = arr;
+            saveState();
+            renderAll();
+            showToast('メンバー順をシャッフルしました');
+        }
+
+        function updateSetting(key, value) {
+            appState.settings[key] = value;
+            saveState();
+            renderAll();
+        }
+
+        function setHolePar(holeIdx, par) {
+            appState.holes[holeIdx].par = par;
+            saveState();
+            renderAll();
+        }
+
+        function adjustHolePlayerScore(holeIdx, playerIndex, delta) {
+            const hole = appState.holes[holeIdx];
+            const current = hole.scores[playerIndex];
+            const base = (typeof current === 'number' && current > 0) ? current : hole.par;
+            const nextVal = Math.max(1, Math.min(20, base + delta));
+            hole.scores[playerIndex] = nextVal;
+            saveState();
+            renderAll();
+        }
+
+        function setHolePlayerScoreDirect(holeIdx, playerIndex, valStr) {
+            const hole = appState.holes[holeIdx];
+            if (valStr === '' || valStr === null) {
+                hole.scores[playerIndex] = null;
+            } else {
+                const num = parseInt(valStr, 10);
+                if (!isNaN(num) && num >= 1 && num <= 20) {
+                    hole.scores[playerIndex] = num;
+                }
+            }
+            saveState();
+            renderAll();
+        }
+
+        function cycleHoleTeams(holeIdx) {
+            const calc = calculateAllHoles();
+            const currentA = calc.holes[holeIdx].teamA;
+
+            let curIdx = TEAM_COMBINATIONS.findIndex(c =>
+                c.a[0] === currentA[0] && c.a[1] === currentA[1]
+            );
+            if (curIdx === -1) curIdx = 0;
+
+            const nextIdx = (curIdx + 1) % TEAM_COMBINATIONS.length;
+            appState.holes[holeIdx].manualTeamIndex = nextIdx;
+            saveState();
+            renderAll();
+            showToast(`${holeIdx + 1}Hのペアを切り替えました`);
+        }
+
+        function scrollToHole(holeIdx) {
+            const el = document.getElementById(`hole-card-${holeIdx}`);
+            if (el) {
+                const yOffset = -135; // ヘッダー＋固定バー分のオフセット
+                const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+        }
+
+        function jumpToHoleFromSummary(holeIdx) {
+            appState.activeTab = 'score';
+            saveState();
+            renderAll();
+            setTimeout(() => scrollToHole(holeIdx), 60);
+        }
+
+        function setScorecardView(view) {
+            appState.scorecardView = view;
+            saveState();
+            renderSummaryTab(calculateAllHoles());
+        }
+
+        function openResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function executeResetRound() {
+            appState.holes = Array.from({ length: 18 }, (_, idx) => ({
+                par: DEFAULT_PARS[idx],
+                scores: [null, null, null, null],
+                manualTeamIndex: null
+            }));
+            appState.activeTab = 'score';
+            saveState();
+            closeResetModal();
+            renderAll();
+            showToast('18Hのスコアをリセットしました');
+        }
+
+        /**
+         * ============================================================================
+         * UI レンダリング処理
+         * ============================================================================
+         */
+        function renderAll() {
+            const calc = calculateAllHoles();
+
+            // タブ表示切り替え
+            ['settings', 'score', 'summary'].forEach(t => {
+                const sec = document.getElementById(`tab-${t}`);
+                const nav = document.getElementById(`nav-${t}`);
+                if (appState.activeTab === t) {
+                    sec.classList.remove('hidden');
+                    nav.classList.add('text-turf-700');
+                    nav.classList.remove('text-slate-400');
+                } else {
+                    sec.classList.add('hidden');
+                    nav.classList.remove('text-turf-700');
+                    nav.classList.add('text-slate-400');
+                }
+            });
+
+            // ヘッダーバッジ更新
+            const completedCount = calc.holes.filter(h => h.isComplete).length;
+            document.getElementById('header-badge').textContent = `${completedCount} / 18H`;
+            document.getElementById('header-mode-badge').textContent =
+                appState.settings.teamMode === 'rotation' ? '毎Hローテ' : '順位編成';
+
+            renderSettingsTab();
+            renderAllHolesScoreTab(calc);
+            renderSummaryTab(calc);
+        }
+
+        /**
+         * TAB 1: 設定画面の描画
+         */
+        function renderSettingsTab() {
+            for (let i = 0; i < 4; i++) {
+                const input = document.getElementById(`player-name-${i}`);
+                if (document.activeElement !== input) {
+                    input.value = appState.players[i];
+                }
+            }
+            document.getElementById('mode-rotation').checked = (appState.settings.teamMode === 'rotation');
+            document.getElementById('mode-ranking').checked = (appState.settings.teamMode === 'ranking');
+            document.getElementById('setting-rate').value = appState.settings.rate;
+            document.getElementById('setting-unit').value = appState.settings.unit;
+            document.getElementById('rule-birdie-flip').checked = appState.settings.birdieFlip;
+            document.getElementById('rule-eagle-double').checked = appState.settings.eagleDouble;
+            document.getElementById('rule-double-digit').checked = appState.settings.doubleDigitHigh;
+        }
+
+        /**
+         * TAB 2: 18ホール一覧スコア入力画面の描画
+         */
+        function renderAllHolesScoreTab(calc) {
+            // 1. 上部固定バーの4人現在累計ポイント
+            const liveTotalsEl = document.getElementById('live-player-totals');
+            liveTotalsEl.innerHTML = '';
+            for (let p = 0; p < 4; p++) {
+                const pt = calc.totalPlayerPoints[p];
+                const ptColor = pt > 0 ? 'text-emerald-300' : pt < 0 ? 'text-rose-300' : 'text-slate-300';
+                const box = document.createElement('div');
+                box.className = 'bg-white/10 rounded-xl px-2 py-1.5 text-center';
+                box.innerHTML = `
+                    <div class="text-[11px] font-bold text-white truncate">${escapeHtml(appState.players[p])}</div>
+                    <div class="font-num font-black text-sm ${ptColor}">${pt > 0 ? '+' : ''}${pt}</div>
+                `;
+                liveTotalsEl.appendChild(box);
+            }
+
+            // 2. 1H〜18Hのカード一覧を描画
+            const listEl = document.getElementById('all-holes-list');
+            listEl.innerHTML = '';
+
+            for (let h = 0; h < 18; h++) {
+                const holeData = appState.holes[h];
+                const res = calc.holes[h];
+
+                // OUT / IN の区切り見出し
+                if (h === 0 || h === 9) {
+                    const divider = document.createElement('div');
+                    divider.className = 'flex items-center gap-2 pt-1 pb-0.5 px-1';
+                    divider.innerHTML = `
+                        <span class="text-xs font-black tracking-wider text-turf-800 bg-turf-100 px-2.5 py-0.5 rounded-md">
+                            ${h === 0 ? 'OUT (1H - 9H)' : 'IN (10H - 18H)'}
+                        </span>
+                        <div class="h-px bg-slate-300 flex-1"></div>
+                    `;
+                    listEl.appendChild(divider);
+                }
+
+                // ホール結果バッジの生成
+                let resultBadgeHtml = `<span class="text-[11px] font-bold text-slate-400">未入力</span>`;
+                if (res.isComplete) {
+                    if (res.diff > 0) {
+                        resultBadgeHtml = `<span class="text-xs font-num font-black bg-blue-600 text-white px-2 py-0.5 rounded-lg">A勝利 +${res.diff}${res.multiplier > 1 ? ' (2倍)' : ''}</span>`;
+                    } else if (res.diff < 0) {
+                        resultBadgeHtml = `<span class="text-xs font-num font-black bg-amber-500 text-white px-2 py-0.5 rounded-lg">B勝利 +${Math.abs(res.diff)}${res.multiplier > 1 ? ' (2倍)' : ''}</span>`;
+                    } else {
+                        resultBadgeHtml = `<span class="text-xs font-num font-bold bg-slate-500 text-white px-2 py-0.5 rounded-lg">DRAW</span>`;
+                    }
+                }
+
+                const card = document.createElement('div');
+                card.id = `hole-card-${h}`;
+                card.className = `bg-white rounded-2xl shadow-xs border ${res.isComplete ? 'border-emerald-300' : 'border-slate-200'} overflow-hidden`;
+
+                card.innerHTML = `
+                    <!-- ホールヘッダー行 -->
+                    <div class="bg-slate-50 px-3 py-2 border-b border-slate-200 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-num font-black text-base text-turf-900">${h + 1}H</span>
+                            <!-- PAR 切り替え -->
+                            <div class="flex items-center bg-slate-200/80 p-0.5 rounded-lg">
+                                ${[3, 4, 5].map(p => `
+                                    <button onclick="setHolePar(${h}, ${p})" class="btn-tap px-2 py-0.5 rounded-md text-[11px] font-num font-bold transition ${
+                                        holeData.par === p ? 'bg-turf-700 text-white shadow-2xs' : 'text-slate-600'
+                                    }">P${p}</button>
+                                `).join('')}
+                            </div>
+                            <button onclick="cycleHoleTeams(${h})" class="btn-tap text-[11px] font-bold text-slate-600 bg-white border border-slate-300 px-2 py-0.5 rounded-lg flex items-center gap-1" title="ペアを入替">
+                                <svg class="w-3 h-3 text-turf-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                入替
+                            </button>
+                        </div>
+                        <div>${resultBadgeHtml}</div>
+                    </div>
+
+                    <!-- 対戦ペア＆スコア入力エリア（Team A vs Team B） -->
+                    <div class="p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- TEAM A 枠 -->
+                        <div class="rounded-xl bg-blue-50/70 border border-blue-200 p-2">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-[11px] font-black text-blue-800">TEAM A</span>
+                                <span class="font-num font-black text-sm text-blue-900">
+                                    ${res.isComplete ? res.finalA : '--'}
+                                    ${res.flippedA ? '<span class="text-[10px] bg-rose-500 text-white px-1 rounded ml-1">逆転</span>' : ''}
+                                </span>
+                            </div>
+                            <div class="space-y-1.5">
+                                ${res.teamA.map(pIdx => renderCompactPlayerInput(h, pIdx, holeData.scores[pIdx], holeData.par)).join('')}
+                            </div>
+                        </div>
+
+                        <!-- TEAM B 枠 -->
+                        <div class="rounded-xl bg-amber-50/70 border border-amber-200 p-2">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-[11px] font-black text-amber-800">TEAM B</span>
+                                <span class="font-num font-black text-sm text-amber-900">
+                                    ${res.isComplete ? res.finalB : '--'}
+                                    ${res.flippedB ? '<span class="text-[10px] bg-rose-500 text-white px-1 rounded ml-1">逆転</span>' : ''}
+                                </span>
+                            </div>
+                            <div class="space-y-1.5">
+                                ${res.teamB.map(pIdx => renderCompactPlayerInput(h, pIdx, holeData.scores[pIdx], holeData.par)).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            }
+        }
+
+        /**
+         * 18H一覧カード内のコンパクトなプレイヤー別スコア入力行
+         */
+        function renderCompactPlayerInput(holeIdx, pIdx, score, par) {
+            const name = appState.players[pIdx];
+            let badge = '';
+            if (typeof score === 'number' && score > 0) {
+                const diff = score - par;
+                if (diff <= -2) badge = '<span class="text-[10px] font-bold text-amber-700 bg-amber-100 px-1 rounded">Eag</span>';
+                else if (diff === -1) badge = '<span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-1 rounded">Bir</span>';
+                else if (diff === 0) badge = '<span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1 rounded">Par</span>';
+            }
+
+            return `
+                <div class="flex items-center justify-between bg-white rounded-lg px-2 py-1.5 border border-slate-200/80">
+                    <div class="flex items-center gap-1.5 min-w-0 pr-1">
+                        <span class="font-bold text-xs text-slate-800 truncate">${escapeHtml(name)}</span>
+                        ${badge}
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="adjustHolePlayerScore(${holeIdx}, ${pIdx}, -1)" class="btn-tap w-8 h-8 rounded-lg bg-slate-100 active:bg-slate-300 text-slate-700 font-num font-black text-base flex items-center justify-center border border-slate-200">−</button>
+                        <input type="number" inputmode="numeric" min="1" max="20"
+                            value="${score ?? ''}"
+                            placeholder="${par}"
+                            onchange="setHolePlayerScoreDirect(${holeIdx}, ${pIdx}, this.value)"
+                            class="w-9 h-8 text-center font-num font-black text-base rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-turf-500 ${score ? 'text-slate-900 bg-white' : 'text-slate-400 bg-slate-50'}">
+                        <button onclick="adjustHolePlayerScore(${holeIdx}, ${pIdx}, 1)" class="btn-tap w-8 h-8 rounded-lg bg-slate-100 active:bg-slate-300 text-slate-700 font-num font-black text-base flex items-center justify-center border border-slate-200">＋</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * TAB 3: 18Hスコアカード＆最終精算画面の描画
+         */
+        function renderSummaryTab(calc) {
+            const rate = appState.settings.rate;
+            const unit = appState.settings.unit;
+
+            document.getElementById('summary-rate-badge').textContent = `1pt = ${rate.toLocaleString()}${unit}`;
+
+            // 1. 精算ランキングカード
+            const rankedPlayers = [0, 1, 2, 3]
+                .map(idx => ({
+                    idx,
+                    name: appState.players[idx],
+                    points: calc.totalPlayerPoints[idx],
+                    money: calc.totalPlayerPoints[idx] * rate
+                }))
+                .sort((a, b) => b.points - a.points);
+
+            const settlementContainer = document.getElementById('settlement-cards');
+            settlementContainer.innerHTML = '';
+
+            rankedPlayers.forEach((p, rank) => {
+                const isPlus = p.points > 0;
+                const isMinus = p.points < 0;
+                const medalColors = [
+                    'bg-amber-400 text-amber-950',
+                    'bg-slate-300 text-slate-800',
+                    'bg-amber-700/80 text-white',
+                    'bg-slate-100 text-slate-500'
+                ];
+
+                const card = document.createElement('div');
+                card.className = 'flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/70';
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-full font-num font-black text-xs flex items-center justify-center ${medalColors[rank]}">
+                            ${rank + 1}
+                        </span>
+                        <div>
+                            <div class="font-bold text-sm text-slate-800">${escapeHtml(p.name)}</div>
+                            <div class="text-xs font-num font-bold ${isPlus ? 'text-turf-700' : isMinus ? 'text-rose-600' : 'text-slate-500'}">
+                                累計: ${p.points > 0 ? '+' : ''}${p.points} pt
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-num font-black text-lg ${isPlus ? 'text-turf-700' : isMinus ? 'text-rose-600' : 'text-slate-600'}">
+                            ${p.money > 0 ? '+' : ''}${p.money.toLocaleString()}<span class="text-xs font-bold ml-0.5">${escapeHtml(unit)}</span>
+                        </div>
+                    </div>
+                `;
+                settlementContainer.appendChild(card);
+            });
+
+            // 2. ALL / OUT / IN 切り替えボタン状態
+            ['ALL', 'OUT', 'IN'].forEach(v => {
+                const btn = document.getElementById(`sc-view-${v.toLowerCase()}`);
+                if (appState.scorecardView === v) {
+                    btn.className = 'px-2.5 py-1 rounded-lg bg-white text-turf-800 shadow-xs';
+                } else {
+                    btn.className = 'px-2.5 py-1 rounded-lg text-slate-600';
+                }
+            });
+
+            // 3. ホール別明細テーブル
+            const tbody = document.getElementById('scorecard-tbody');
+            tbody.innerHTML = '';
+
+            const startH = appState.scorecardView === 'IN' ? 9 : 0;
+            const endH = appState.scorecardView === 'OUT' ? 9 : 18;
+
+            for (let h = startH; h < endH; h++) {
+                const res = calc.holes[h];
+                const holeData = appState.holes[h];
+
+                const pA1 = `${appState.players[res.teamA[0]]}(${holeData.scores[res.teamA[0]] ?? '-'})`;
+                const pA2 = `${appState.players[res.teamA[1]]}(${holeData.scores[res.teamA[1]] ?? '-'})`;
+                const pB1 = `${appState.players[res.teamB[0]]}(${holeData.scores[res.teamB[0]] ?? '-'})`;
+                const pB2 = `${appState.players[res.teamB[1]]}(${holeData.scores[res.teamB[1]] ?? '-'})`;
+
+                let resultHtml = '<span class="text-slate-300">-</span>';
+                if (res.isComplete) {
+                    if (res.diff > 0) {
+                        resultHtml = `<span class="font-num font-extrabold text-blue-700">A +${res.diff}</span>`;
+                    } else if (res.diff < 0) {
+                        resultHtml = `<span class="font-num font-extrabold text-amber-700">B +${Math.abs(res.diff)}</span>`;
+                    } else {
+                        resultHtml = `<span class="font-num font-bold text-slate-400">DRAW</span>`;
+                    }
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 cursor-pointer';
+                tr.onclick = () => jumpToHoleFromSummary(h);
+
+                tr.innerHTML = `
+                    <td class="py-2.5 px-2 text-center sticky left-0 bg-white border-r border-slate-100">
+                        <div class="font-num font-black text-slate-800">${h + 1}H</div>
+                        <div class="text-[10px] text-slate-400 font-num">P${res.par}</div>
+                    </td>
+                    <td class="py-2 px-2">
+                        <div class="font-num font-black text-sm text-blue-800">
+                            ${res.isComplete ? res.finalA : '--'}
+                            ${res.flippedA ? '<span class="text-[10px] bg-rose-100 text-rose-700 px-1 rounded ml-0.5">逆転</span>' : ''}
+                        </div>
+                        <div class="text-[11px] text-slate-600 leading-tight mt-0.5">${escapeHtml(pA1)} / ${escapeHtml(pA2)}</div>
+                    </td>
+                    <td class="py-2 px-2">
+                        <div class="font-num font-black text-sm text-amber-800">
+                            ${res.isComplete ? res.finalB : '--'}
+                            ${res.flippedB ? '<span class="text-[10px] bg-rose-100 text-rose-700 px-1 rounded ml-0.5">逆転</span>' : ''}
+                        </div>
+                        <div class="text-[11px] text-slate-600 leading-tight mt-0.5">${escapeHtml(pB1)} / ${escapeHtml(pB2)}</div>
+                    </td>
+                    <td class="py-2.5 px-2 text-right whitespace-nowrap">
+                        ${resultHtml}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            // 4. 個人別グロス集計
+            const grossGrid = document.getElementById('gross-summary-grid');
+            grossGrid.innerHTML = '';
+
+            for (let p = 0; p < 4; p++) {
+                let outSum = 0, inSum = 0, outCount = 0, inCount = 0;
+                for (let h = 0; h < 9; h++) {
+                    const s = appState.holes[h].scores[p];
+                    if (typeof s === 'number' && s > 0) { outSum += s; outCount++; }
+                }
+                for (let h = 9; h < 18; h++) {
+                    const s = appState.holes[h].scores[p];
+                    if (typeof s === 'number' && s > 0) { inSum += s; inCount++; }
+                }
+                const total = outSum + inSum;
+
+                const box = document.createElement('div');
+                box.className = 'p-2.5 rounded-xl bg-slate-50 border border-slate-200/80';
+                box.innerHTML = `
+                    <div class="font-bold text-xs text-slate-800 truncate">${escapeHtml(appState.players[p])}</div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-[11px] text-slate-500 font-num">OUT:${outCount ? outSum : '-'} / IN:${inCount ? inSum : '-'}</span>
+                        <span class="font-num font-black text-base text-turf-800">${(outCount + inCount) ? total : '-'}</span>
+                    </div>
+                `;
+                grossGrid.appendChild(box);
+            }
+        }
+
+        /**
+         * HTMLエスケープ処理
+         */
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
