@@ -341,7 +341,7 @@
                 </div>
                 <div>
                     <h3 class="font-bold text-base text-slate-900">ラウンドデータのリセット</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">1H〜18Hのスコアがすべて消去されます。メンバー名とルール設定は保持されます。</p>
+                    <p class="text-xs text-slate-500 mt-0.5">1H〜18Hのスコアとメンバー名が初期状態（Aさん〜Dさん）にリセットされます。ルール設定は保持されます。</p>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2.5 pt-2">
@@ -738,6 +738,7 @@
         }
 
         function executeResetRound() {
+            appState.players = ['Aさん', 'Bさん', 'Cさん', 'Dさん'];
             appState.holes = Array.from({ length: 18 }, (_, idx) => ({
                 par: DEFAULT_PARS[idx],
                 scores: [null, null, null, null],
@@ -747,7 +748,7 @@
             saveState();
             closeResetModal();
             renderAll();
-            showToast('18Hのスコアをリセットしました');
+            showToast('スコアとメンバー名をリセットしました');
         }
 
         function renderAll() {
